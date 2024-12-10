@@ -81,10 +81,10 @@ with tab1:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Key-Sizes)",
-                labels={"Time": "Time (ms)", "bits": "Bits"}
+                labels={"Time": "Time (nanoseconds)", "bits": "Bits"}
             )
             fig_absolute_bits.update_traces(
-                texttemplate="%{x:.1f} ms",
+                texttemplate="%{x:.1f} nanoseconds",
                 textposition="inside"
             )
             st.plotly_chart(fig_absolute_bits)
@@ -126,10 +126,10 @@ with tab1:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Vector Lengths)",
-                labels={"Time": "Time (ms)", "l": "Vector Length"}
+                labels={"Time": "Time (nanoseconds)", "l": "Vector Length"}
             )
             fig_absolute_length.update_traces(
-                texttemplate="%{x:.1f} ms",
+                texttemplate="%{x:.1f} nanoseconds",
                 textposition="inside"
             )
             st.plotly_chart(fig_absolute_length)
@@ -178,10 +178,10 @@ with tab2:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Key-Sizes)",
-                labels={"Time": "Time (ms)", "bits": "Bits"}
+                labels={"Time": "Time (nanoseconds)", "bits": "Bits"}
             )
             fig_absolute_bits.update_traces(
-                texttemplate="%{x:.1f} ms",
+                texttemplate="%{x:.1f} nanoseconds",
                 textposition="inside"
             )
             st.plotly_chart(fig_absolute_bits)
@@ -223,10 +223,10 @@ with tab2:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Vector Lengths)",
-                labels={"Time": "Time (ms)", "l": "Vector Length"}
+                labels={"Time": "Time (nanoseconds)", "l": "Vector Length"}
             )
             fig_absolute_length.update_traces(
-                texttemplate="%{x:.1f} ms",
+                texttemplate="%{x:.1f} nanoseconds",
                 textposition="inside"
             )
             st.plotly_chart(fig_absolute_length)
@@ -274,11 +274,11 @@ with tab3:
             color="Step",
             orientation="h",
             title=f"{schema}: Absolute Times (Key-Sizes)",
-            labels={"Time": "Time (ms)", "k": "k Value"}
+            labels={"Time": "Time (nanoseconds)", "k": "k Value"}
         )
         # Werte innerhalb der Balken anzeigen
         fig_absolute.update_traces(
-            texttemplate="%{x:.1f} ms",
+            texttemplate="%{x:.1f} nanoseconds",
             textposition="inside"
         )
         st.plotly_chart(fig_absolute)
@@ -391,20 +391,19 @@ with tab4:
                 color="Step-Schema",
                 barmode="group",
                 title=f"{title} - {selected_step.capitalize()} Comparison",
-                labels={"Time": "Time (ms)", x_axis: x_axis.capitalize()}
+                labels={"Time": "Time (nanoseconds)", x_axis: x_axis.capitalize()}
             )
             st.plotly_chart(bar_fig, use_container_width=True)
             
             # Create delta plot (if Delta % values are available)
             if not delta_df.empty:
-                delta_fig = px.line(
-                    delta_df,
-                    x=x_axis,
-                    y="Delta (%)",
-                    markers=True,
-                    title=f"Delta (%) for {title}",
-                    labels={"Delta (%)": "Delta (%)", x_axis: x_axis.capitalize()}
-                )
+                delta_fig = px.bar(
+                            delta_df,
+                            x=x_axis,
+                            y="Delta (%)",
+                            title=f"Delta (%) for {title}",
+                            labels={"Delta (%)": "Delta (%)", x_axis: x_axis.capitalize()}
+                        )
                 st.plotly_chart(delta_fig, use_container_width=True)
             else:
                 st.warning("No Delta values available for comparison.")
