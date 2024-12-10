@@ -9,7 +9,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-
+import io
 
 st.set_page_config(
      page_title="IMP Functional Encryption",
@@ -41,6 +41,14 @@ def load_data():
         for key, path in paths.items():
             schemas[schema][key] = pd.read_csv(path)
     return schemas
+
+def to_excel(df) -> bytes:
+    output = io.BytesIO()
+    writer = pd.ExcelWriter(output, engine="xlsxwriter")
+    df.to_excel(writer, sheet_name="Sheet1")
+    writer.close()
+    processed_data = output.getvalue()
+    return processed_data
 
 # Daten laden
 schemas = load_data()
@@ -81,13 +89,14 @@ with tab1:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Key-Sizes)",
-                labels={"Time": "Time (nanoseconds)", "bits": "Bits"}
+                labels={"Time": "Time (ns)", "bits": "Bits"}
             )
             fig_absolute_bits.update_traces(
-                texttemplate="%{x:.1f} nanoseconds",
+                texttemplate="%{x:.1f} ns",
                 textposition="inside"
             )
             st.plotly_chart(fig_absolute_bits)
+            
             
             # Prozentualer Werte Barplot für Key Size
             melted_df_bits["Percentage"] = (melted_df_bits["Time"] / melted_df_bits["time total"]) * 100
@@ -105,11 +114,23 @@ with tab1:
                 textposition="inside"
             )
             st.plotly_chart(fig_percentage_bits)
+            
+            with st.expander("📊 Dataset for Download:"):
+                st.dataframe(melted_df_bits, use_container_width=True)
+                st.download_button(
+                    "Download Data",
+                    data=to_excel(melted_df_bits),
+                    file_name="IMP_IPFE_DDH_df_bits.xlsx",
+                    mime="application/vnd.ms-excel",
+                    key="ipfe-ddh-bits"
+                    )
 
             # Plot für verschiedene Vector Lengths
             df_length = schemas[schema]["length"]
+            
+            st.write('---')
             st.subheader(f"{schema}: Vector Length-based Plots")
-
+            
             # Plot für Vector Lengths
             melted_df_length = df_length.melt(
                 id_vars=["l", "time total"], 
@@ -117,28 +138,44 @@ with tab1:
                 var_name="Step", 
                 value_name="Time"
             )
+            melted_df_length["l_name"] = "l="+melted_df_length["l"].astype(str)
+            
+            min_l, max_l = int(melted_df_length["l"].min()), int(melted_df_length["l"].max())
+            selected_range = st.slider(
+                "Wähle den Bereich für Vector Length (l):",
+                min_value=min_l,
+                max_value=max_l,
+                value=(min_l, max_l),  
+                step=1  # Schrittweite
+            )
+            
+            melted_df_length = melted_df_length[
+                melted_df_length["l"].astype(int).between(selected_range[0], selected_range[1])
+            ]
             
             # Absoluten Werte Barplot für Vector Length
             fig_absolute_length = px.bar(
                 melted_df_length,
-                y="l",  # Alle Lengths auf der Y-Achse
+                y=str("l_name"),  # Alle Lengths auf der Y-Achse
                 x="Time",
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Vector Lengths)",
-                labels={"Time": "Time (nanoseconds)", "l": "Vector Length"}
+                labels={"Time": "Time (ns)", "l": "Vector Length"},
+
             )
             fig_absolute_length.update_traces(
-                texttemplate="%{x:.1f} nanoseconds",
+                texttemplate="%{x:.1f} ns",
                 textposition="inside"
             )
             st.plotly_chart(fig_absolute_length)
             
             # Prozentualer Werte Barplot für Vector Length
             melted_df_length["Percentage"] = (melted_df_length["Time"] / melted_df_length["time total"]) * 100
+
             fig_percentage_length = px.bar(
                 melted_df_length,
-                y="l",  # Alle Lengths auf der Y-Achse
+                y="l_name",  # Alle Lengths auf der Y-Achse
                 x="Percentage",
                 color="Step",
                 orientation="h",
@@ -150,6 +187,16 @@ with tab1:
                 textposition="inside"
             )
             st.plotly_chart(fig_percentage_length)
+            
+            with st.expander("📊 Dataset for Download:"):
+                st.dataframe(melted_df_length, use_container_width=True)
+                st.download_button(
+                    "Download Data",
+                    data=to_excel(melted_df_length),
+                    file_name="IMP_IPFE_DDH_df_length.xlsx",
+                    mime="application/vnd.ms-excel",
+                    key="ipfe-ddh-length"
+                    )
 
 # Tab2: IPFE-FULLYSEC
 with tab2:
@@ -170,6 +217,7 @@ with tab2:
                 value_name="Time"
             )
             
+            
             # Absoluten Werte Barplot für Key Size
             fig_absolute_bits = px.bar(
                 melted_df_bits,
@@ -178,10 +226,10 @@ with tab2:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Key-Sizes)",
-                labels={"Time": "Time (nanoseconds)", "bits": "Bits"}
+                labels={"Time": "Time (ns)", "bits": "Bits"}
             )
             fig_absolute_bits.update_traces(
-                texttemplate="%{x:.1f} nanoseconds",
+                texttemplate="%{x:.1f} ns",
                 textposition="inside"
             )
             st.plotly_chart(fig_absolute_bits)
@@ -202,9 +250,23 @@ with tab2:
                 textposition="inside"
             )
             st.plotly_chart(fig_percentage_bits)
+            
+            with st.expander("📊 Dataset for Download:"):
+                st.dataframe(melted_df_bits, use_container_width=True)
+                st.download_button(
+                    "Download Data",
+                    data=to_excel(melted_df_bits),
+                    file_name="IMP_IPFE_FULLSEC_df_bits.xlsx",
+                    mime="application/vnd.ms-excel",
+                    key="ipfe-fullsec-bits"
+                    )
+            
+            
 
             # Plot für verschiedene Vector Lengths
             df_length = schemas[schema]["length"]
+            
+            st.write("---")
             st.subheader(f"{schema}: Vector Length-based Plots")
 
             # Plot für Vector Lengths
@@ -214,28 +276,46 @@ with tab2:
                 var_name="Step", 
                 value_name="Time"
             )
+            melted_df_length["l_name"] = "l="+melted_df_length["l"].astype(str)
+            
+            min_l, max_l = int(melted_df_length["l"].min()), int(melted_df_length["l"].max())
+            selected_range = st.slider(
+                "Wähle den Bereich für Vector Length (l):",
+                min_value=min_l,
+                max_value=max_l,
+                value=(min_l, max_l),  
+                step=1 , # Schrittweite,
+                key='ipfe-fullysec'
+            )
+            
+            melted_df_length = melted_df_length[
+                melted_df_length["l"].astype(int).between(selected_range[0], selected_range[1])
+            ]
+                    
+            
             
             # Absoluten Werte Barplot für Vector Length
             fig_absolute_length = px.bar(
                 melted_df_length,
-                y="l",  # Alle Lengths auf der Y-Achse
+                y="l_name",  # Alle Lengths auf der Y-Achse
                 x="Time",
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Vector Lengths)",
-                labels={"Time": "Time (nanoseconds)", "l": "Vector Length"}
+                labels={"Time": "Time (ns)", "l": "Vector Length"}
             )
             fig_absolute_length.update_traces(
-                texttemplate="%{x:.1f} nanoseconds",
+                texttemplate="%{x:.1f} ns",
                 textposition="inside"
             )
             st.plotly_chart(fig_absolute_length)
             
             # Prozentualer Werte Barplot für Vector Length
             melted_df_length["Percentage"] = (melted_df_length["Time"] / melted_df_length["time total"]) * 100
+            
             fig_percentage_length = px.bar(
                 melted_df_length,
-                y="l",  # Alle Lengths auf der Y-Achse
+                y="l_name",  # Alle Lengths auf der Y-Achse
                 x="Percentage",
                 color="Step",
                 orientation="h",
@@ -247,6 +327,16 @@ with tab2:
                 textposition="inside"
             )
             st.plotly_chart(fig_percentage_length)
+            
+            with st.expander("📊 Dataset for Download:"):
+                st.dataframe(melted_df_length, use_container_width=True)
+                st.download_button(
+                    "Download Data",
+                    data=to_excel(melted_df_length),
+                    file_name="IMP_IPFE_FULLSEC_df_length.xlsx",
+                    mime="application/vnd.ms-excel",
+                    key="ipfe-fullsec-length"
+                    )
 
 
 
@@ -255,7 +345,7 @@ with tab3:
     if schema == "QFE-CHARM":
         df = schemas[schema]["qfe"]
         st.subheader(f"Schema: {schema}")
-        
+    
         steps = ["time setup", "time keygen", "time encrypt", "time decrypt"]
         
         # Daten umwandeln, um alle k-Werte auf der Y-Achse anzuzeigen
@@ -266,6 +356,47 @@ with tab3:
             value_name="Time"
         )
         
+
+        fig_line = go.Figure()
+        
+        # Linien hinzufügen
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time setup'], mode='lines', name='Time Setup'))
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time keygen'], mode='lines', name='Time Keygen'))
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time total'], mode='lines', name='Time Total'))
+        
+        # Layout für den Plot anpassen
+        fig_line.update_layout(
+            title="QFE Benchmark - Key Sizes with fixed Vectors",
+            xaxis_title="k",
+            yaxis_title="Time (seconds)",
+            legend_title="Steps",
+            template="plotly_white",
+            xaxis=dict(showgrid=False),  # Gitternetzlinien der x-Achse ausblenden
+            yaxis=dict(showgrid=False),  # Gitternetzlinien der y-Achse ausblenden
+        )
+        
+        # Plot anzeigen
+        st.plotly_chart(fig_line)
+        
+        st.write("---")
+        
+        
+        min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
+        selected_range = st.slider(
+            "Wähle den Bereich für Key Sizes (k):",
+            min_value=min_l,
+            max_value=max_l,
+            value=(min_l, max_l),  
+            step=1,  # Schrittweite
+            key='qfe'
+        )
+        
+        melted_df = melted_df[
+            melted_df["k"].astype(int).between(selected_range[0], selected_range[1])
+        ]
+        
         # Absoluter Werte Barplot
         fig_absolute = px.bar(
             melted_df,
@@ -274,14 +405,16 @@ with tab3:
             color="Step",
             orientation="h",
             title=f"{schema}: Absolute Times (Key-Sizes)",
-            labels={"Time": "Time (nanoseconds)", "k": "k Value"}
+            labels={"Time": "Time (ns)", "k": "k Value"}
         )
         # Werte innerhalb der Balken anzeigen
         fig_absolute.update_traces(
-            texttemplate="%{x:.1f} nanoseconds",
+            texttemplate="%{x:.1f} ns",
             textposition="inside"
         )
         st.plotly_chart(fig_absolute)
+        
+
         
         # Prozentualer Werte Barplot
         melted_df["Percentage"] = (melted_df["Time"] / melted_df["time total"]) * 100
@@ -300,6 +433,16 @@ with tab3:
         )
         
         st.plotly_chart(fig_percentage)
+        
+        with st.expander("📊 Dataset for Download:"):
+            st.dataframe(melted_df, use_container_width=True)
+            st.download_button(
+                "Download Data",
+                data=to_excel(melted_df),
+                file_name="IMP_BOUND_QFE_df.xlsx",
+                mime="application/vnd.ms-excel",
+                key="bound-qfe"
+                )
         
         
 
@@ -339,6 +482,7 @@ with tab4:
     
     def create_bar_and_delta_plots(df, x_axis, title):
         # Filter data for the selected step(s)
+
         filtered_df = df[[x_axis, "Schema"] + step_columns].copy()
         
         # Add the "Step" column
@@ -364,14 +508,15 @@ with tab4:
             var_name="Step",
             value_name="Time"
         )
-    
+        
         # Create a pivot for Delta Calculation
         pivot_df = melted_df.pivot_table(
             index=[x_axis, "Step"], 
             columns="Schema", 
             values="Time"
         ).reset_index()
-    
+        
+        
         # Ensure both schemas (IPFE-DDH and IPFE-FULLYSEC) are present for each row
         if "IPFE-DDH" in pivot_df.columns and "IPFE-FULLYSEC" in pivot_df.columns:
             # Calculate Delta in Percent (for keygen / keyder comparison)
@@ -381,9 +526,30 @@ with tab4:
             
             # Filter rows where both schemas exist for the comparison
             delta_df = pivot_df.dropna(subset=["IPFE-FULLYSEC", "IPFE-DDH"])
-    
+            
+           
+            st.write("---")
             # Create bar plot
             st.subheader(f"{title} - {selected_step.capitalize()} Comparison")
+            
+            min_l, max_l = int(melted_df[x_axis].min()), int(melted_df[x_axis].max())
+            
+            selected_range = st.slider(
+                f"Select {x_axis}:",
+                min_value=min_l,
+                max_value=max_l,
+                value=(min_l, max_l),  
+                step=1,  # Schrittweite
+                key=x_axis
+            )
+            
+            melted_df = melted_df[
+                melted_df[x_axis].astype(int).between(selected_range[0], selected_range[1])
+            ]
+            
+            melted_df[x_axis] = "l="+melted_df[x_axis].astype(str)
+            delta_df[x_axis] = "l="+delta_df[x_axis].astype(str)
+            
             bar_fig = px.bar(
                 melted_df,
                 x=x_axis,
@@ -391,7 +557,7 @@ with tab4:
                 color="Step-Schema",
                 barmode="group",
                 title=f"{title} - {selected_step.capitalize()} Comparison",
-                labels={"Time": "Time (nanoseconds)", x_axis: x_axis.capitalize()}
+                labels={"Time": "Time (ns)", x_axis: x_axis.capitalize()}
             )
             st.plotly_chart(bar_fig, use_container_width=True)
             
