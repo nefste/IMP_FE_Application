@@ -60,7 +60,7 @@ with st.expander("🤔 About **Bilinear Pairing Groups**:"):
 A **bilinear pairing** is a special kind of function defined on two elements from potentially different groups that outputs an element in a third group. 
 
 Formally, a bilinear pairing is a map:
-$e: G_1 \times G_2 \to G_T$
+$e: G_1 \\times G_2 \\to G_T$
 
 where $G_1$, $G_2, and $G_T$ are groups of prime order $p$, and $e$ has the following properties:
 1. **Bilinearity:** For all $u$ in $G_1$ and $v$ in $G_2$, and all integers $a, b$,

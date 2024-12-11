@@ -522,7 +522,7 @@ with tab4:
             # Calculate Delta in Percent (for keygen / keyder comparison)
             pivot_df["Delta (%)"] = round((
                 (pivot_df["IPFE-FULLYSEC"] - pivot_df["IPFE-DDH"]) / pivot_df["IPFE-DDH"]
-            ) * 100,1)
+            ) * 100,2)
             
             # Filter rows where both schemas exist for the comparison
             delta_df = pivot_df.dropna(subset=["IPFE-FULLYSEC", "IPFE-DDH"])
