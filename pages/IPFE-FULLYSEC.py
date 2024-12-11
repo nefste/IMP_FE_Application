@@ -28,9 +28,6 @@ with st.expander("📖 See IPFE-FULLYSEC Scheme"):
     st.image("figures/ipfe-fullsec.png")
 
 
-st.warning("⚠️ This site is still under construction ⚠️")
-
-
 
 st.markdown("""
 This application provides a step-by-step explanation of **Fully Secure Functional Encryption (FE) for Inner Products**.  
