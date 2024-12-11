@@ -60,7 +60,7 @@ st.title("Functional Encryption - Analysis")
 schema_select = ["IPFE-DDH", "IPFE-FULLYSEC", "QFE-CHARM"]
 
 # Tab-Setup
-tab1, tab2, tab3, tab4 = st.tabs(["IPFE-DDH", "IPFE-FULLYSEC", "QFE-CHARM", "Benchmarking"])
+tab1, tab2, tab3, tab4 = st.tabs(["1️⃣ IPFE-DDH", "2️⃣ IPFE-FULLYSEC", "3️⃣ QFE-CHARM", "📊 Benchmarking"])
 
 # Tab1: IPFE-DDH
 with tab1:
@@ -73,6 +73,15 @@ with tab1:
             
             steps = ["time setup", "time encrypt", "time keyder", "time decrypt"]
             
+            # Multiselect für die Steps
+            selected_steps = st.multiselect(
+                "Select Steps:",
+                options=steps,
+                default=steps,  # Standardmäßig alle Schritte ausgewählt
+                key="ipfe-ddh-steps"
+            )
+            
+            
             # Plot für Key Sizes
             melted_df_bits = df_bits.melt(
                 id_vars=["bits", "time total"], 
@@ -80,6 +89,10 @@ with tab1:
                 var_name="Step", 
                 value_name="Time"
             )
+            
+                        
+            # Daten auf die ausgewählten Schritte filtern
+            melted_df_bits = melted_df_bits[melted_df_bits["Step"].isin(selected_steps)]
             
             # Absoluten Werte Barplot für Key Size
             fig_absolute_bits = px.bar(
@@ -142,7 +155,7 @@ with tab1:
             
             min_l, max_l = int(melted_df_length["l"].min()), int(melted_df_length["l"].max())
             selected_range = st.slider(
-                "Wähle den Bereich für Vector Length (l):",
+                "Select Range for Vector Length (l):",
                 min_value=min_l,
                 max_value=max_l,
                 value=(min_l, max_l),  
@@ -209,6 +222,16 @@ with tab2:
             
             steps = ["time setup", "time encrypt", "time keygen", "time decrypt"]
             
+            # Multiselect für die Steps
+            selected_steps = st.multiselect(
+                "Select Steps:",
+                options=steps,
+                default=steps,  # Standardmäßig alle Schritte ausgewählt
+                key="ipfe-fullysec-steps"
+            )
+            
+            
+            
             # Plot für Key Sizes
             melted_df_bits = df_bits.melt(
                 id_vars=["bits", "time total"], 
@@ -217,6 +240,8 @@ with tab2:
                 value_name="Time"
             )
             
+            # Daten auf die ausgewählten Schritte filtern
+            melted_df_bits = melted_df_bits[melted_df_bits["Step"].isin(selected_steps)]
             
             # Absoluten Werte Barplot für Key Size
             fig_absolute_bits = px.bar(
@@ -280,7 +305,7 @@ with tab2:
             
             min_l, max_l = int(melted_df_length["l"].min()), int(melted_df_length["l"].max())
             selected_range = st.slider(
-                "Wähle den Bereich für Vector Length (l):",
+                "Select Range for Vector Length (l):",
                 min_value=min_l,
                 max_value=max_l,
                 value=(min_l, max_l),  
@@ -348,15 +373,7 @@ with tab3:
     
         steps = ["time setup", "time keygen", "time encrypt", "time decrypt"]
         
-        # Daten umwandeln, um alle k-Werte auf der Y-Achse anzuzeigen
-        melted_df = df.melt(
-            id_vars=["k", "time total"], 
-            value_vars=steps, 
-            var_name="Step", 
-            value_name="Time"
-        )
         
-
         fig_line = go.Figure()
         
         # Linien hinzufügen
@@ -382,10 +399,28 @@ with tab3:
         
         st.write("---")
         
+        # Multiselect für die Steps
+        selected_steps = st.multiselect(
+            "Select Steps:",
+            options=steps,
+            default=steps,  # Standardmäßig alle Schritte ausgewählt
+            key="qfe_steps"
+        )
+        
+        # Daten umwandeln, um alle k-Werte auf der Y-Achse anzuzeigen
+        melted_df = df.melt(
+            id_vars=["k", "time total"], 
+            value_vars=steps, 
+            var_name="Step", 
+            value_name="Time"
+        )
+        
+        # Daten auf die ausgewählten Schritte filtern
+        melted_df = melted_df[melted_df["Step"].isin(selected_steps)]
         
         min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
         selected_range = st.slider(
-            "Wähle den Bereich für Key Sizes (k):",
+            "Select Range for Key Sizes (k):",
             min_value=min_l,
             max_value=max_l,
             value=(min_l, max_l),  
