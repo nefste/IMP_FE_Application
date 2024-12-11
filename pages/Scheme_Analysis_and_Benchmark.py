@@ -520,9 +520,9 @@ with tab4:
         # Ensure both schemas (IPFE-DDH and IPFE-FULLYSEC) are present for each row
         if "IPFE-DDH" in pivot_df.columns and "IPFE-FULLYSEC" in pivot_df.columns:
             # Calculate Delta in Percent (for keygen / keyder comparison)
-            pivot_df["Delta (%)"] = (
+            pivot_df["Delta (%)"] = round((
                 (pivot_df["IPFE-FULLYSEC"] - pivot_df["IPFE-DDH"]) / pivot_df["IPFE-DDH"]
-            ) * 100
+            ) * 100,1)
             
             # Filter rows where both schemas exist for the comparison
             delta_df = pivot_df.dropna(subset=["IPFE-FULLYSEC", "IPFE-DDH"])
@@ -560,19 +560,30 @@ with tab4:
                 labels={"Time": "Time (ns)", x_axis: x_axis.capitalize()}
             )
             st.plotly_chart(bar_fig, use_container_width=True)
-            
+                        
             # Create delta plot (if Delta % values are available)
             if not delta_df.empty:
+                # Add a color column based on Delta values
+                delta_df["Color"] = delta_df["Delta (%)"].apply(lambda x: "green" if x > 0 else "red")
+                
+                # Create the bar chart
                 delta_fig = px.bar(
-                            delta_df,
-                            x=x_axis,
-                            y="Delta (%)",
-                            title=f"Delta (%) for {title}",
-                            labels={"Delta (%)": "Delta (%)", x_axis: x_axis.capitalize()}
-                        )
+                    delta_df,
+                    x=x_axis,
+                    y="Delta (%)",
+                    title=f"Delta (%) for {title}",
+                    labels={"Delta (%)": "Delta (%)", x_axis: x_axis.capitalize()},
+                    color="Color",  # Use the color column for bar colors
+                    color_discrete_map={"green": "green", "red": "red"},  # Map colors explicitly
+                    text="Delta (%)" 
+                )
+                
+                delta_fig.update_traces(textposition="outside") 
+                # Show the plot
                 st.plotly_chart(delta_fig, use_container_width=True)
             else:
                 st.warning("No Delta values available for comparison.")
+
     
         else:
             st.warning("Both schemas (IPFE-DDH and IPFE-FULLYSEC) are required for Delta calculation.")
