@@ -98,6 +98,8 @@ def decrypt(mpk, ct, sky, y, p, g):
 
 # Streamlit App for the IPFE Demo
 st.title("Inner Product Functional Encryption (IPFE) under the DDH Assumption")
+st.info("**Reference**: M. Abdalla, F. Bourse, A. De Caro, and D. Pointcheval, “Simple Functional Encryption Schemes for Inner Products,” 2015. https://eprint.iacr.org/2015/017.pdf")
+
 
 st.markdown("""
 This application demonstrates the Inner Product Functional Encryption (IPFE) scheme under the Decisional Diffie-Hellman (DDH) assumption. 
@@ -114,8 +116,6 @@ At each step, we will explain the reasoning behind the operations to help you un
 
 with st.expander("📖 See IPFE-DDH Scheme"):
     st.image("figures/ipfe-ddh.png")
-
-st.info("**Reference**: M. Abdalla, F. Bourse, A. De Caro, and D. Pointcheval, “Simple Functional Encryption Schemes for Inner Products,” 2015. https://eprint.iacr.org/2015/017.pdf")
 
 
 with st.expander("🤔 About the Decisional Diffie-Hellman (DDH) Assumption"):
