@@ -20,6 +20,9 @@ st.set_page_config(
 st.logo("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/HSG_Logo_DE_RGB.svg/1024px-HSG_Logo_DE_RGB.svg.png",link="https://www.unisg.ch/de/")
 
 
+
+
+
 # Hilfsfunktion: Daten laden
 def load_data():
     files = {
@@ -65,13 +68,25 @@ tab1, tab2, tab3, tab4 = st.tabs(["1️⃣ IPFE-DDH", "2️⃣ IPFE-FULLYSEC", "
 # Tab1: IPFE-DDH
 with tab1:
     st.header("Analyse: IPFE-DDH")
+    st.write("---")
     for schema in schema_select:
         if schema == "IPFE-DDH":
             # Plot für verschiedene Key Sizes
             df_bits = schemas[schema]["bits"]
             st.subheader(f"{schema}: Key Size-based Plots")
+            st.info("Simulation run with a fixed Vector Length of 2")
             
             steps = ["time setup", "time encrypt", "time keyder", "time decrypt"]
+            
+            green_palette = [
+                "#006400",  # DarkGreen
+                "#228B22",  # ForestGreen
+                "#32CD32",  # LimeGreen
+                "#7CFC00",  # LawnGreen
+            ]
+
+            # Map steps to colors
+            step_colors = {step: green_palette[i % len(green_palette)] for i, step in enumerate(steps)}
             
             # Multiselect für die Steps
             selected_steps = st.multiselect(
@@ -102,7 +117,8 @@ with tab1:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Key-Sizes)",
-                labels={"Time": "Time (ns)", "bits": "Bits"}
+                labels={"Time": "Time (ns)", "bits": "Bits"},
+                # color_discrete_sequence=green_palette
             )
             fig_absolute_bits.update_traces(
                 texttemplate="%{x:.1f} ns",
@@ -143,6 +159,7 @@ with tab1:
             
             st.write('---')
             st.subheader(f"{schema}: Vector Length-based Plots")
+            st.info("Simulation run with a fixed Key Size of 512")
             
             # Plot für Vector Lengths
             melted_df_length = df_length.melt(
@@ -214,11 +231,13 @@ with tab1:
 # Tab2: IPFE-FULLYSEC
 with tab2:
     st.header("Analyse: IPFE-FULLYSEC")
+    st.write("---")
     for schema in schema_select:
         if schema == "IPFE-FULLYSEC":
             # Plot für verschiedene Key Sizes
             df_bits = schemas[schema]["bits"]
             st.subheader(f"{schema}: Key Size-based Plots")
+            st.info("Simulation run with a fixed Vector Length of 2")
             
             steps = ["time setup", "time encrypt", "time keygen", "time decrypt"]
             
@@ -293,6 +312,7 @@ with tab2:
             
             st.write("---")
             st.subheader(f"{schema}: Vector Length-based Plots")
+            st.info("Simulation run with a fixed Key Size of 512")
 
             # Plot für Vector Lengths
             melted_df_length = df_length.melt(
