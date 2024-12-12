@@ -56,8 +56,22 @@ def to_excel(df) -> bytes:
 # Daten laden
 schemas = load_data()
 
+
 # Streamlit App
-st.title("Functional Encryption - Analysis")
+col1, col2 = st.columns([7,2])
+
+with col1:
+    st.title("Functional Encryption - Analysis")
+with col2:
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/HSG_Logo_DE_RGB.svg/1024px-HSG_Logo_DE_RGB.svg.png")
+
+st.toast(
+    """
+    Made with passion and love by
+    Karim & Stephan
+    Enjoy exploring! 🚀
+    """,
+    icon="""❤️""",)
 
 # Auswahl des Schemas
 schema_select = ["IPFE-DDH", "IPFE-FULLYSEC", "QFE-CHARM"]
