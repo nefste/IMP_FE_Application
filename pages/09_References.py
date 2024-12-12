@@ -8,7 +8,6 @@ Created on Fri Dec  6 09:39:05 2024
 import streamlit as st
 
 
-
 st.set_page_config(
      page_title="IMP Functional Encryption",
      page_icon="🔐",
@@ -18,4 +17,4 @@ st.set_page_config(
 st.logo("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/HSG_Logo_DE_RGB.svg/1024px-HSG_Logo_DE_RGB.svg.png",link="https://www.unisg.ch/de/")
 
 
-st.image("figures/goals.png")
+st.image("figures/reference1.png")
