@@ -124,6 +124,14 @@ with tab1:
                 texttemplate="%{x:.1f} ns",
                 textposition="inside"
             )
+            log_scale = st.toggle("Logarithmic Scale for Time Axis", value=False, key="ipfe-ddh-logax")
+            
+            if log_scale:
+                fig_absolute_bits.update_layout(xaxis_type="log")
+                fig_absolute_bits.update_layout(barmode="group")
+            else:
+                fig_absolute_bits.update_layout(barmode="stack")
+                
             st.plotly_chart(fig_absolute_bits)
             
             
@@ -201,6 +209,14 @@ with tab1:
                 texttemplate="%{x:.1f} ns",
                 textposition="inside"
             )
+            log_scale = st.toggle("Logarithmic Scale for Time Axis", value=False, key="ipfe-ddh-logax-l")
+            
+            if log_scale:
+                fig_absolute_length.update_layout(xaxis_type="log")
+                fig_absolute_length.update_layout(barmode="group")
+            else:
+                fig_absolute_length.update_layout(barmode="stack")
+                
             st.plotly_chart(fig_absolute_length)
             
             # Prozentualer Werte Barplot für Vector Length
@@ -281,6 +297,14 @@ with tab2:
                 texttemplate="%{x:.1f} ns",
                 textposition="inside"
             )
+            log_scale = st.toggle("Logarithmic Scale for Time Axis", value=False, key="ipfe-fullsec-logax")
+            
+            if log_scale:
+                fig_absolute_bits.update_layout(xaxis_type="log")
+                fig_absolute_bits.update_layout(barmode="group")
+            else:
+                fig_absolute_bits.update_layout(barmode="stack")
+                
             st.plotly_chart(fig_absolute_bits)
             
             # Prozentualer Werte Barplot für Key Size
@@ -362,6 +386,15 @@ with tab2:
                 texttemplate="%{x:.1f} ns",
                 textposition="inside"
             )
+            
+            log_scale = st.toggle("Logarithmic Scale for Time Axis", value=False, key="ipfe-fullsec-logax-l")
+            
+            if log_scale:
+                fig_absolute_length.update_layout(xaxis_type="log")
+                fig_absolute_length.update_layout(barmode="group")
+            else:
+                fig_absolute_length.update_layout(barmode="stack")
+                
             st.plotly_chart(fig_absolute_length)
             
             # Prozentualer Werte Barplot für Vector Length
@@ -662,5 +695,95 @@ with tab4:
     
     # Create plots for Vector Length (l)
     create_bar_and_delta_plots(comparison_length_df, x_axis="l", title="Vector Length (l)")
+    
+    st.write("---")
+    st.subheader("Compare QFE-CHARM with another IPFE Scheme by Total Time")
+
+    # Choose which IPFE scheme to compare with QFE
+    compare_with = st.selectbox("Compare QFE-CHARM with:", ["IPFE-DDH", "IPFE-FULLYSEC"], key="compare_with_total")
+
+    # Load QFE data
+    qfe_df = schemas["QFE-CHARM"]["qfe"].copy()
+    qfe_df["Schema"] = "QFE-CHARM"
+
+    # Load chosen IPFE scheme data
+    ipfe_bits_df = schemas[compare_with]["bits"].copy()
+    ipfe_bits_df["Schema"] = compare_with
+
+    ipfe_length_df = schemas[compare_with]["length"].copy()
+    ipfe_length_df["Schema"] = compare_with
+
+    def compare_total_time(qfe_df, ipfe_df, qfe_param, ipfe_param, title, unique_id=""):
+        st.markdown(f"### Comparison of QFE ({qfe_param}) with {compare_with} ({ipfe_param}) {title}")
+
+        # Slider for QFE range
+        qfe_min, qfe_max = int(qfe_df[qfe_param].min()), int(qfe_df[qfe_param].max())
+        qfe_range = st.slider(
+            f"Select Range for QFE {qfe_param.upper()}:",
+            min_value=qfe_min,
+            max_value=qfe_max,
+            value=(qfe_min, qfe_max),
+            step=1,
+            key=f"qfe-{qfe_param}-range-total-{unique_id}"
+        )
+
+        qfe_filtered = qfe_df[qfe_df[qfe_param].between(qfe_range[0], qfe_range[1])]
+
+        # Slider for IPFE range
+        ipfe_min, ipfe_max = int(ipfe_df[ipfe_param].min()), int(ipfe_df[ipfe_param].max())
+        ipfe_range = st.slider(
+            f"Select Range for {compare_with} {ipfe_param.upper()}:",
+            min_value=ipfe_min,
+            max_value=ipfe_max,
+            value=(ipfe_min, ipfe_max),
+            step=1,
+            key=f"ipfe-{ipfe_param}-range-total-{unique_id}"
+        )
+
+        ipfe_filtered = ipfe_df[ipfe_df[ipfe_param].between(ipfe_range[0], ipfe_range[1])]
+
+        # For plotting, rename the parameter column to a common name
+        qfe_filtered[f"{qfe_param}_label"] = qfe_param + "=" + qfe_filtered[qfe_param].astype(str)
+        ipfe_filtered[f"{ipfe_param}_label"] = ipfe_param + "=" + ipfe_filtered[ipfe_param].astype(str)
+
+        # Plot QFE total time
+        fig_qfe = px.bar(
+            qfe_filtered,
+            y=f"{qfe_param}_label",
+            x="time total",
+            orientation="h",
+            title=f"QFE (Param {qfe_param.upper()}) {title} - Total Time",
+            labels={"time total": "Time (ns)", f"{qfe_param}_label": qfe_param.upper()},
+            color_discrete_sequence=["#006400"]
+        )
+        fig_qfe.update_traces(texttemplate="%{x:.1f} ns", textposition="inside")
+        st.plotly_chart(fig_qfe, use_container_width=True)
+
+        # Plot IPFE total time
+        fig_ipfe = px.bar(
+            ipfe_filtered,
+            y=f"{ipfe_param}_label",
+            x="time total",
+            orientation="h",
+            title=f"{compare_with} (Param {ipfe_param.upper()}) {title} - Total Time",
+            labels={"time total": "Time (ns)", f"{ipfe_param}_label": ipfe_param.upper()},
+            color_discrete_sequence=["#228B22"]
+        )
+        fig_ipfe.update_traces(texttemplate="%{x:.1f} ns", textposition="inside")
+        st.plotly_chart(fig_ipfe, use_container_width=True)
+
+        # Download options
+        with st.expander("📊 Download Filtered Data"):
+            st.write("### QFE Data")
+            st.dataframe(qfe_filtered, use_container_width=True)
 
 
+            st.write(f"### {compare_with} Data")
+            st.dataframe(ipfe_filtered, use_container_width=True)
+
+
+    # Compare QFE (k) with IPFE (bits)
+    compare_total_time(qfe_df, ipfe_bits_df, qfe_param="k", ipfe_param="bits", title="(Key Sizes)", unique_id="bits")
+
+    # Compare QFE (k) with IPFE (l)
+    compare_total_time(qfe_df, ipfe_length_df, qfe_param="k", ipfe_param="l", title="(Vector Length)", unique_id="length")
