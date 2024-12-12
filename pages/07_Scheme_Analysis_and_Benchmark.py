@@ -118,7 +118,7 @@ with tab1:
                 orientation="h",
                 title=f"{schema}: Absolute Times (Key-Sizes)",
                 labels={"Time": "Time (ns)", "bits": "Bits"},
-                # color_discrete_sequence=green_palette
+                color_discrete_sequence=green_palette
             )
             fig_absolute_bits.update_traces(
                 texttemplate="%{x:.1f} ns",
@@ -136,7 +136,9 @@ with tab1:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Percentage of Total Time (Key-Sizes)",
-                labels={"Percentage": "Percentage (%)", "bits": "Bits"}
+                labels={"Percentage": "Percentage (%)", "bits": "Bits"},
+                color_discrete_sequence=green_palette
+                
             )
             fig_percentage_bits.update_traces(
                 texttemplate="%{x:.1f}%",
@@ -192,6 +194,7 @@ with tab1:
                 orientation="h",
                 title=f"{schema}: Absolute Times (Vector Lengths)",
                 labels={"Time": "Time (ns)", "l": "Vector Length"},
+                color_discrete_sequence=green_palette
 
             )
             fig_absolute_length.update_traces(
@@ -202,7 +205,7 @@ with tab1:
             
             # Prozentualer Werte Barplot für Vector Length
             melted_df_length["Percentage"] = (melted_df_length["Time"] / melted_df_length["time total"]) * 100
-
+            melted_df_length = melted_df_length[melted_df_length["Step"].isin(selected_steps)]
             fig_percentage_length = px.bar(
                 melted_df_length,
                 y="l_name",  # Alle Lengths auf der Y-Achse
@@ -210,7 +213,8 @@ with tab1:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Percentage of Total Time (Vector Lengths)",
-                labels={"Percentage": "Percentage (%)", "length": "Vector Length"}
+                labels={"Percentage": "Percentage (%)", "length": "Vector Length"},
+                color_discrete_sequence=green_palette
             )
             fig_percentage_length.update_traces(
                 texttemplate="%{x:.1f}%",
@@ -270,7 +274,8 @@ with tab2:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Key-Sizes)",
-                labels={"Time": "Time (ns)", "bits": "Bits"}
+                labels={"Time": "Time (ns)", "bits": "Bits"},
+                color_discrete_sequence=green_palette
             )
             fig_absolute_bits.update_traces(
                 texttemplate="%{x:.1f} ns",
@@ -280,6 +285,7 @@ with tab2:
             
             # Prozentualer Werte Barplot für Key Size
             melted_df_bits["Percentage"] = (melted_df_bits["Time"] / melted_df_bits["time total"]) * 100
+            
             fig_percentage_bits = px.bar(
                 melted_df_bits,
                 y="bits",  # Alle Bits auf der Y-Achse
@@ -287,7 +293,8 @@ with tab2:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Percentage of Total Time (Key-Sizes)",
-                labels={"Percentage": "Percentage (%)", "bits": "Bits"}
+                labels={"Percentage": "Percentage (%)", "bits": "Bits"},
+                color_discrete_sequence=green_palette
             )
             fig_percentage_bits.update_traces(
                 texttemplate="%{x:.1f}%",
@@ -322,6 +329,7 @@ with tab2:
                 value_name="Time"
             )
             melted_df_length["l_name"] = "l="+melted_df_length["l"].astype(str)
+            melted_df_length = melted_df_length[melted_df_length["Step"].isin(selected_steps)]
             
             min_l, max_l = int(melted_df_length["l"].min()), int(melted_df_length["l"].max())
             selected_range = st.slider(
@@ -347,7 +355,8 @@ with tab2:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Absolute Times (Vector Lengths)",
-                labels={"Time": "Time (ns)", "l": "Vector Length"}
+                labels={"Time": "Time (ns)", "l": "Vector Length"},
+                color_discrete_sequence=green_palette
             )
             fig_absolute_length.update_traces(
                 texttemplate="%{x:.1f} ns",
@@ -365,7 +374,8 @@ with tab2:
                 color="Step",
                 orientation="h",
                 title=f"{schema}: Percentage of Total Time (Vector Lengths)",
-                labels={"Percentage": "Percentage (%)", "length": "Vector Length"}
+                labels={"Percentage": "Percentage (%)", "length": "Vector Length"},
+                color_discrete_sequence=green_palette
             )
             fig_percentage_length.update_traces(
                 texttemplate="%{x:.1f}%",
@@ -460,7 +470,8 @@ with tab3:
             color="Step",
             orientation="h",
             title=f"{schema}: Absolute Times (Key-Sizes)",
-            labels={"Time": "Time (ns)", "k": "k Value"}
+            labels={"Time": "Time (ns)", "k": "k Value"},
+            color_discrete_sequence=green_palette
         )
         # Werte innerhalb der Balken anzeigen
         fig_absolute.update_traces(
@@ -480,7 +491,8 @@ with tab3:
             color="Step",
             orientation="h",
             title=f"{schema}: Percentage of Total Time (Key-Sizes)",
-            labels={"Percentage": "Percentage (%)", "k": "k Value"}
+            labels={"Percentage": "Percentage (%)", "k": "k Value"},
+            color_discrete_sequence=green_palette
         )
         fig_percentage.update_traces(
             texttemplate="%{x:.1f}%",
@@ -612,7 +624,8 @@ with tab4:
                 color="Step-Schema",
                 barmode="group",
                 title=f"{title} - {selected_step.capitalize()} Comparison",
-                labels={"Time": "Time (ns)", x_axis: x_axis.capitalize()}
+                labels={"Time": "Time (ns)", x_axis: x_axis.capitalize()},
+                color_discrete_sequence=green_palette
             )
             st.plotly_chart(bar_fig, use_container_width=True)
                         
