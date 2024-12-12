@@ -21,3 +21,6 @@ st.logo("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/HSG_Logo_DE_R
 
 
 st.image("figures/intro1.png")
+st.image("figures/intro2.png")
+st.image("figures/intro3.png")
+st.image("figures/intro4.png")
