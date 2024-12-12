@@ -13,7 +13,7 @@ import numpy as np
 
 st.set_page_config(
      page_title="IMP Functional Encryption",
-     page_icon="🔐",
+     page_icon="https://upload.wikimedia.org/wikipedia/de/thumb/7/77/Uni_St_Gallen_Logo.svg/2048px-Uni_St_Gallen_Logo.svg.png",
      layout="wide",
 )
 
