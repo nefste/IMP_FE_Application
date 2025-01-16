@@ -34,8 +34,11 @@ def load_data():
             "length": "data/ipfe-fullysec_timings_increasing_l.csv",
             "bits": "data/ipfe-fullysec_timings_increasing_bits.csv",
         },
-        "QFE-CHARM": {
-            "qfe": "data/qfe_timings_increasing_k.csv",  # Die Pfad zur neuen Datei
+        "BQFE": {
+            "bqfe": "data/qfe_timings_increasing_k.csv",  # Die Pfad zur neuen Datei
+        },
+        "UQFE": {
+            "uqfe": "data/uqfe_benchmark_fixed_vectors_2.csv",  # Die Pfad zur neuen Datei
         }
     }
     schemas = {}
@@ -74,10 +77,10 @@ st.toast(
     icon="""❤️""",)
 
 # Auswahl des Schemas
-schema_select = ["IPFE-DDH", "IPFE-FULLYSEC", "QFE-CHARM"]
+schema_select = ["IPFE-DDH", "IPFE-FULLYSEC", "BQFE","UQFE"]
 
 # Tab-Setup
-tab1, tab2, tab3, tab4 = st.tabs(["1️⃣ IPFE-DDH", "2️⃣ IPFE-FULLYSEC", "3️⃣ QFE-CHARM", "📊 Benchmarking"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["1️⃣ IPFE-DDH", "2️⃣ IPFE-FULLYSEC", "3️⃣ BQFE", "4️⃣ UQFE" ,"📊 Benchmarking"])
 
 # Tab1: IPFE-DDH
 with tab1:
@@ -443,9 +446,9 @@ with tab2:
 
 
 with tab3:
-    st.header("Analyse: QFE-CHARM")
-    if schema == "QFE-CHARM":
-        df = schemas[schema]["qfe"]
+    st.header("Analyse: Bounded-QFE")
+    if schema == "BQFE":
+        df = schemas[schema]["bqfe"]
         st.subheader(f"Schema: {schema}")
     
         steps = ["time setup", "time keygen", "time encrypt", "time decrypt"]
@@ -462,7 +465,7 @@ with tab3:
         
         # Layout für den Plot anpassen
         fig_line.update_layout(
-            title="QFE Benchmark - Key Sizes with fixed Vectors",
+            title="BQFE Benchmark - Key Sizes with fixed Vectors",
             xaxis_title="k",
             yaxis_title="Time (seconds)",
             legend_title="Steps",
@@ -559,10 +562,124 @@ with tab3:
                 )
         
         
-
-
-
 with tab4:
+    st.header("Analyse: Unbounded-QFE")
+    if schema == "BQFE":
+        df = schemas[schema]["uqfe"]
+        st.subheader(f"Schema: {schema}")
+    
+        steps = ["time setup", "time keygen", "time encrypt", "time decrypt"]
+        
+        
+        fig_line = go.Figure()
+        
+        # Linien hinzufügen
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time setup'], mode='lines', name='Time Setup'))
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time keygen'], mode='lines', name='Time Keygen'))
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
+        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time total'], mode='lines', name='Time Total'))
+        
+        # Layout für den Plot anpassen
+        fig_line.update_layout(
+            title="UQFE Benchmark - Key Sizes with fixed Vectors",
+            xaxis_title="k",
+            yaxis_title="Time (seconds)",
+            legend_title="Steps",
+            template="plotly_white",
+            xaxis=dict(showgrid=False),  # Gitternetzlinien der x-Achse ausblenden
+            yaxis=dict(showgrid=False),  # Gitternetzlinien der y-Achse ausblenden
+        )
+        
+        # Plot anzeigen
+        st.plotly_chart(fig_line)
+        
+        st.write("---")
+        
+        # Multiselect für die Steps
+        selected_steps = st.multiselect(
+            "Select Steps:",
+            options=steps,
+            default=steps,  # Standardmäßig alle Schritte ausgewählt
+            key="qfe_steps"
+        )
+        
+        # Daten umwandeln, um alle k-Werte auf der Y-Achse anzuzeigen
+        melted_df = df.melt(
+            id_vars=["k", "time total"], 
+            value_vars=steps, 
+            var_name="Step", 
+            value_name="Time"
+        )
+        
+        # Daten auf die ausgewählten Schritte filtern
+        melted_df = melted_df[melted_df["Step"].isin(selected_steps)]
+        
+        min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
+        selected_range = st.slider(
+            "Select Range for Key Sizes (k):",
+            min_value=min_l,
+            max_value=max_l,
+            value=(min_l, max_l),  
+            step=1,  # Schrittweite
+            key='qfe'
+        )
+        
+        melted_df = melted_df[
+            melted_df["k"].astype(int).between(selected_range[0], selected_range[1])
+        ]
+        
+        # Absoluter Werte Barplot
+        fig_absolute = px.bar(
+            melted_df,
+            y="k",  # Alle k-Werte auf der Y-Achse
+            x="Time",
+            color="Step",
+            orientation="h",
+            title=f"{schema}: Absolute Times (Key-Sizes)",
+            labels={"Time": "Time (ns)", "k": "k Value"},
+            color_discrete_sequence=green_palette
+        )
+        # Werte innerhalb der Balken anzeigen
+        fig_absolute.update_traces(
+            texttemplate="%{x:.1f} ns",
+            textposition="inside"
+        )
+        st.plotly_chart(fig_absolute)
+        
+
+        
+        # Prozentualer Werte Barplot
+        melted_df["Percentage"] = (melted_df["Time"] / melted_df["time total"]) * 100
+        fig_percentage = px.bar(
+            melted_df,
+            y="k",  # Alle k-Werte auf der Y-Achse
+            x="Percentage",
+            color="Step",
+            orientation="h",
+            title=f"{schema}: Percentage of Total Time (Key-Sizes)",
+            labels={"Percentage": "Percentage (%)", "k": "k Value"},
+            color_discrete_sequence=green_palette
+        )
+        fig_percentage.update_traces(
+            texttemplate="%{x:.1f}%",
+            textposition="inside"
+        )
+        
+        st.plotly_chart(fig_percentage)
+        
+        with st.expander("📊 Dataset for Download:"):
+            st.dataframe(melted_df, use_container_width=True)
+            st.download_button(
+                "Download Data",
+                data=to_excel(melted_df),
+                file_name="IMP_BOUND_QFE_df.xlsx",
+                mime="application/vnd.ms-excel",
+                key="bound-qfe"
+                )
+
+
+with tab5:
     st.header("Benchmarking: Direct Comparison of Schemes")
     st.subheader("Comparison between IPFE-DDH and IPFE-FULLYSEC")
     
