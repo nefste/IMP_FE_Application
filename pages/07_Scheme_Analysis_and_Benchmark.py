@@ -828,14 +828,14 @@ with tab5:
     create_bar_and_delta_plots(comparison_length_df, x_axis="l", title="Vector Length (l)")
     
     st.write("---")
-    st.subheader("Compare QFE-CHARM with another IPFE Scheme by Total Time")
+    st.subheader("Compare BQFE with another IPFE Scheme by Total Time")
 
     # Choose which IPFE scheme to compare with QFE
-    compare_with = st.selectbox("Compare QFE-CHARM with:", ["IPFE-DDH", "IPFE-FULLYSEC"], key="compare_with_total")
+    compare_with = st.selectbox("Compare BQFE with:", ["IPFE-DDH", "IPFE-FULLYSEC"], key="compare_with_total")
 
     # Load QFE data
-    qfe_df = schemas["QFE-CHARM"]["qfe"].copy()
-    qfe_df["Schema"] = "QFE-CHARM"
+    qfe_df = schemas["BQFE"]["bqfe"].copy()
+    qfe_df["Schema"] = "BQFE"
 
     # Load chosen IPFE scheme data
     ipfe_bits_df = schemas[compare_with]["bits"].copy()
