@@ -35,7 +35,7 @@ def load_data():
             "bits": "data/ipfe-fullysec_timings_increasing_bits.csv",
         },
         "BQFE": {
-            "bqfe": "data/qfe_timings_increasing_k.csv",  # Die Pfad zur neuen Datei
+            "bqfe": "data/qfe_benchmark_fixed_vectors_sizes.csv",  # Die Pfad zur neuen Datei
         },
         "UQFE": {
             "uqfe": "data/uqfe_benchmark_fixed_vectors_2.csv",  # Die Pfad zur neuen Datei
@@ -447,245 +447,250 @@ with tab2:
 
 with tab3:
     st.header("Analyse: Bounded-QFE")
-    if schema == "BQFE":
-        df = schemas[schema]["bqfe"]
-        st.subheader(f"Schema: {schema}")
+    for schema in schema_select:
+        if schema == "BQFE":
+            df = schemas[schema]["bqfe"]
+            st.subheader(f"Schema: {schema}")
+        
+            steps = ["time setup", "time keygen", "time encrypt", "time decrypt"]
+            
+            
+            fig_line = go.Figure()
+            
+            # Linien hinzufügen
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time setup'], mode='lines', name='Time Setup'))
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time keygen'], mode='lines', name='Time Keygen'))
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time total'], mode='lines', name='Time Total'))
+            
+            # Layout für den Plot anpassen
+            fig_line.update_layout(
+                title="BQFE Benchmark - Key Sizes with fixed Vectors",
+                xaxis_title="k",
+                yaxis_title="Time (seconds)",
+                legend_title="Steps",
+                template="plotly_white",
+                xaxis=dict(showgrid=False),  # Gitternetzlinien der x-Achse ausblenden
+                yaxis=dict(showgrid=False),  # Gitternetzlinien der y-Achse ausblenden
+            )
+            
+            # Plot anzeigen
+            st.plotly_chart(fig_line)
+            
+            st.write("---")
+            
+            # Multiselect für die Steps
+            selected_steps = st.multiselect(
+                "Select Steps:",
+                options=steps,
+                default=steps,  # Standardmäßig alle Schritte ausgewählt
+                key="bqfe_steps"
+            )
+            
+            # Daten umwandeln, um alle k-Werte auf der Y-Achse anzuzeigen
+            melted_df = df.melt(
+                id_vars=["k", "time total"], 
+                value_vars=steps, 
+                var_name="Step", 
+                value_name="Time"
+            )
+            
+            # Daten auf die ausgewählten Schritte filtern
+            melted_df = melted_df[melted_df["Step"].isin(selected_steps)]
+            
+            min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
+            selected_range = st.slider(
+                "Select Range for Key Sizes (k):",
+                min_value=min_l,
+                max_value=max_l,
+                value=(min_l, max_l),  
+                step=1,  # Schrittweite
+                key='bqfe'
+            )
+            
+            melted_df = melted_df[
+                melted_df["k"].astype(int).between(selected_range[0], selected_range[1])
+            ]
+            
+            # Absoluter Werte Barplot
+            fig_absolute = px.bar(
+                melted_df,
+                y="k",  # Alle k-Werte auf der Y-Achse
+                x="Time",
+                color="Step",
+                orientation="h",
+                title=f"{schema}: Absolute Times (Key-Sizes)",
+                labels={"Time": "Time (ns)", "k": "k Value"},
+                color_discrete_sequence=green_palette
+            )
+            # Werte innerhalb der Balken anzeigen
+            fig_absolute.update_traces(
+                texttemplate="%{x:.1f} ns",
+                textposition="inside"
+            )
+            st.plotly_chart(fig_absolute)
+            
     
-        steps = ["time setup", "time keygen", "time encrypt", "time decrypt"]
-        
-        
-        fig_line = go.Figure()
-        
-        # Linien hinzufügen
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time setup'], mode='lines', name='Time Setup'))
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time keygen'], mode='lines', name='Time Keygen'))
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time total'], mode='lines', name='Time Total'))
-        
-        # Layout für den Plot anpassen
-        fig_line.update_layout(
-            title="BQFE Benchmark - Key Sizes with fixed Vectors",
-            xaxis_title="k",
-            yaxis_title="Time (seconds)",
-            legend_title="Steps",
-            template="plotly_white",
-            xaxis=dict(showgrid=False),  # Gitternetzlinien der x-Achse ausblenden
-            yaxis=dict(showgrid=False),  # Gitternetzlinien der y-Achse ausblenden
-        )
-        
-        # Plot anzeigen
-        st.plotly_chart(fig_line)
-        
-        st.write("---")
-        
-        # Multiselect für die Steps
-        selected_steps = st.multiselect(
-            "Select Steps:",
-            options=steps,
-            default=steps,  # Standardmäßig alle Schritte ausgewählt
-            key="qfe_steps"
-        )
-        
-        # Daten umwandeln, um alle k-Werte auf der Y-Achse anzuzeigen
-        melted_df = df.melt(
-            id_vars=["k", "time total"], 
-            value_vars=steps, 
-            var_name="Step", 
-            value_name="Time"
-        )
-        
-        # Daten auf die ausgewählten Schritte filtern
-        melted_df = melted_df[melted_df["Step"].isin(selected_steps)]
-        
-        min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
-        selected_range = st.slider(
-            "Select Range for Key Sizes (k):",
-            min_value=min_l,
-            max_value=max_l,
-            value=(min_l, max_l),  
-            step=1,  # Schrittweite
-            key='qfe'
-        )
-        
-        melted_df = melted_df[
-            melted_df["k"].astype(int).between(selected_range[0], selected_range[1])
-        ]
-        
-        # Absoluter Werte Barplot
-        fig_absolute = px.bar(
-            melted_df,
-            y="k",  # Alle k-Werte auf der Y-Achse
-            x="Time",
-            color="Step",
-            orientation="h",
-            title=f"{schema}: Absolute Times (Key-Sizes)",
-            labels={"Time": "Time (ns)", "k": "k Value"},
-            color_discrete_sequence=green_palette
-        )
-        # Werte innerhalb der Balken anzeigen
-        fig_absolute.update_traces(
-            texttemplate="%{x:.1f} ns",
-            textposition="inside"
-        )
-        st.plotly_chart(fig_absolute)
-        
-
-        
-        # Prozentualer Werte Barplot
-        melted_df["Percentage"] = (melted_df["Time"] / melted_df["time total"]) * 100
-        fig_percentage = px.bar(
-            melted_df,
-            y="k",  # Alle k-Werte auf der Y-Achse
-            x="Percentage",
-            color="Step",
-            orientation="h",
-            title=f"{schema}: Percentage of Total Time (Key-Sizes)",
-            labels={"Percentage": "Percentage (%)", "k": "k Value"},
-            color_discrete_sequence=green_palette
-        )
-        fig_percentage.update_traces(
-            texttemplate="%{x:.1f}%",
-            textposition="inside"
-        )
-        
-        st.plotly_chart(fig_percentage)
-        
-        with st.expander("📊 Dataset for Download:"):
-            st.dataframe(melted_df, use_container_width=True)
-            st.download_button(
-                "Download Data",
-                data=to_excel(melted_df),
-                file_name="IMP_BOUND_QFE_df.xlsx",
-                mime="application/vnd.ms-excel",
-                key="bound-qfe"
-                )
-        
+            
+            # Prozentualer Werte Barplot
+            melted_df["Percentage"] = (melted_df["Time"] / melted_df["time total"]) * 100
+            fig_percentage = px.bar(
+                melted_df,
+                y="k",  # Alle k-Werte auf der Y-Achse
+                x="Percentage",
+                color="Step",
+                orientation="h",
+                title=f"{schema}: Percentage of Total Time (Key-Sizes)",
+                labels={"Percentage": "Percentage (%)", "k": "k Value"},
+                color_discrete_sequence=green_palette
+            )
+            fig_percentage.update_traces(
+                texttemplate="%{x:.1f}%",
+                textposition="inside"
+            )
+            
+            st.plotly_chart(fig_percentage)
+            
+            with st.expander("📊 Dataset for Download:"):
+                st.dataframe(melted_df, use_container_width=True)
+                st.download_button(
+                    "Download Data",
+                    data=to_excel(melted_df),
+                    file_name="IMP_BOUND_QFE_df.xlsx",
+                    mime="application/vnd.ms-excel",
+                    key="bound-qfe"
+                    )
+            
         
 with tab4:
     st.header("Analyse: Unbounded-QFE")
-    if schema == "BQFE":
-        df = schemas[schema]["uqfe"]
-        st.subheader(f"Schema: {schema}")
+    for schema in schema_select:
+        if schema == "UQFE":
+            df = schemas[schema]["uqfe"]
+            st.subheader(f"Schema: {schema}")
+        
+            steps = ["time setup", "time keygen", "time encrypt", "time decrypt"]
+            
+            
+            fig_line = go.Figure()
+            
+            # Linien hinzufügen
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time setup'], mode='lines', name='Time Setup'))
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time keygen'], mode='lines', name='Time Keygen'))
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
+            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time total'], mode='lines', name='Time Total'))
+            
+            # Layout für den Plot anpassen
+            fig_line.update_layout(
+                title="UQFE Benchmark - Key Sizes with fixed Vectors",
+                xaxis_title="k",
+                yaxis_title="Time (seconds)",
+                legend_title="Steps",
+                template="plotly_white",
+                xaxis=dict(showgrid=False),  # Gitternetzlinien der x-Achse ausblenden
+                yaxis=dict(showgrid=False),  # Gitternetzlinien der y-Achse ausblenden
+            )
+            
+            # Plot anzeigen
+            st.plotly_chart(fig_line)
+            
+            st.write("---")
+            
+            # Multiselect für die Steps
+            selected_steps = st.multiselect(
+                "Select Steps:",
+                options=steps,
+                default=steps,  # Standardmäßig alle Schritte ausgewählt
+                key="uqfe_steps"
+            )
+            
+            # Daten umwandeln, um alle k-Werte auf der Y-Achse anzuzeigen
+            melted_df = df.melt(
+                id_vars=["k", "time total"], 
+                value_vars=steps, 
+                var_name="Step", 
+                value_name="Time"
+            )
+            
+            # Daten auf die ausgewählten Schritte filtern
+            melted_df = melted_df[melted_df["Step"].isin(selected_steps)]
+            
+            min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
+            selected_range = st.slider(
+                "Select Range for Key Sizes (k):",
+                min_value=min_l,
+                max_value=max_l,
+                value=(min_l, max_l),  
+                step=1,  # Schrittweite
+                key='uqfe'
+            )
+            
+            melted_df = melted_df[
+                melted_df["k"].astype(int).between(selected_range[0], selected_range[1])
+            ]
+            
+            # Absoluter Werte Barplot
+            fig_absolute = px.bar(
+                melted_df,
+                y="k",  # Alle k-Werte auf der Y-Achse
+                x="Time",
+                color="Step",
+                orientation="h",
+                title=f"{schema}: Absolute Times (Key-Sizes)",
+                labels={"Time": "Time (ns)", "k": "k Value"},
+                color_discrete_sequence=green_palette
+            )
+            # Werte innerhalb der Balken anzeigen
+            fig_absolute.update_traces(
+                texttemplate="%{x:.1f} ns",
+                textposition="inside"
+            )
+            st.plotly_chart(fig_absolute)
+            
     
-        steps = ["time setup", "time keygen", "time encrypt", "time decrypt"]
-        
-        
-        fig_line = go.Figure()
-        
-        # Linien hinzufügen
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time setup'], mode='lines', name='Time Setup'))
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time keygen'], mode='lines', name='Time Keygen'))
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
-        fig_line.add_trace(go.Scatter(x=df['k'], y=df['time total'], mode='lines', name='Time Total'))
-        
-        # Layout für den Plot anpassen
-        fig_line.update_layout(
-            title="UQFE Benchmark - Key Sizes with fixed Vectors",
-            xaxis_title="k",
-            yaxis_title="Time (seconds)",
-            legend_title="Steps",
-            template="plotly_white",
-            xaxis=dict(showgrid=False),  # Gitternetzlinien der x-Achse ausblenden
-            yaxis=dict(showgrid=False),  # Gitternetzlinien der y-Achse ausblenden
-        )
-        
-        # Plot anzeigen
-        st.plotly_chart(fig_line)
-        
-        st.write("---")
-        
-        # Multiselect für die Steps
-        selected_steps = st.multiselect(
-            "Select Steps:",
-            options=steps,
-            default=steps,  # Standardmäßig alle Schritte ausgewählt
-            key="qfe_steps"
-        )
-        
-        # Daten umwandeln, um alle k-Werte auf der Y-Achse anzuzeigen
-        melted_df = df.melt(
-            id_vars=["k", "time total"], 
-            value_vars=steps, 
-            var_name="Step", 
-            value_name="Time"
-        )
-        
-        # Daten auf die ausgewählten Schritte filtern
-        melted_df = melted_df[melted_df["Step"].isin(selected_steps)]
-        
-        min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
-        selected_range = st.slider(
-            "Select Range for Key Sizes (k):",
-            min_value=min_l,
-            max_value=max_l,
-            value=(min_l, max_l),  
-            step=1,  # Schrittweite
-            key='qfe'
-        )
-        
-        melted_df = melted_df[
-            melted_df["k"].astype(int).between(selected_range[0], selected_range[1])
-        ]
-        
-        # Absoluter Werte Barplot
-        fig_absolute = px.bar(
-            melted_df,
-            y="k",  # Alle k-Werte auf der Y-Achse
-            x="Time",
-            color="Step",
-            orientation="h",
-            title=f"{schema}: Absolute Times (Key-Sizes)",
-            labels={"Time": "Time (ns)", "k": "k Value"},
-            color_discrete_sequence=green_palette
-        )
-        # Werte innerhalb der Balken anzeigen
-        fig_absolute.update_traces(
-            texttemplate="%{x:.1f} ns",
-            textposition="inside"
-        )
-        st.plotly_chart(fig_absolute)
-        
-
-        
-        # Prozentualer Werte Barplot
-        melted_df["Percentage"] = (melted_df["Time"] / melted_df["time total"]) * 100
-        fig_percentage = px.bar(
-            melted_df,
-            y="k",  # Alle k-Werte auf der Y-Achse
-            x="Percentage",
-            color="Step",
-            orientation="h",
-            title=f"{schema}: Percentage of Total Time (Key-Sizes)",
-            labels={"Percentage": "Percentage (%)", "k": "k Value"},
-            color_discrete_sequence=green_palette
-        )
-        fig_percentage.update_traces(
-            texttemplate="%{x:.1f}%",
-            textposition="inside"
-        )
-        
-        st.plotly_chart(fig_percentage)
-        
-        with st.expander("📊 Dataset for Download:"):
-            st.dataframe(melted_df, use_container_width=True)
-            st.download_button(
-                "Download Data",
-                data=to_excel(melted_df),
-                file_name="IMP_BOUND_QFE_df.xlsx",
-                mime="application/vnd.ms-excel",
-                key="bound-qfe"
-                )
+            
+            # Prozentualer Werte Barplot
+            melted_df["Percentage"] = (melted_df["Time"] / melted_df["time total"]) * 100
+            fig_percentage = px.bar(
+                melted_df,
+                y="k",  # Alle k-Werte auf der Y-Achse
+                x="Percentage",
+                color="Step",
+                orientation="h",
+                title=f"{schema}: Percentage of Total Time (Key-Sizes)",
+                labels={"Percentage": "Percentage (%)", "k": "k Value"},
+                color_discrete_sequence=green_palette
+            )
+            fig_percentage.update_traces(
+                texttemplate="%{x:.1f}%",
+                textposition="inside"
+            )
+            
+            st.plotly_chart(fig_percentage)
+            
+            with st.expander("📊 Dataset for Download:"):
+                st.dataframe(melted_df, use_container_width=True)
+                st.download_button(
+                    "Download Data",
+                    data=to_excel(melted_df),
+                    file_name="IMP_BOUND_QFE_df.xlsx",
+                    mime="application/vnd.ms-excel",
+                    key="unbound-qfe"
+                    )
 
 
 with tab5:
     st.header("Benchmarking: Direct Comparison of Schemes")
-    st.subheader("Comparison between IPFE-DDH and IPFE-FULLYSEC")
-    
+    st.write("---")
     # Single-select for steps (combine keygen/keyder)
     steps = ["time setup", "time encrypt", "time keygen / keyder", "time decrypt"]
-    selected_step = st.selectbox("Select a Step to Compare", steps)
+    selected_step = st.selectbox("Select a Step to Compare", steps, key="benchmark_ipfe")
+    st.info(selected_step)
+    st.write("---")
+    st.subheader("Comparison between IPFE-DDH and IPFE-FULLYSEC")
+    
     
     # Handle the "time keygen / keyder" case
     step_columns = (
@@ -749,16 +754,25 @@ with tab5:
         
         
         # Ensure both schemas (IPFE-DDH and IPFE-FULLYSEC) are present for each row
-        if "IPFE-DDH" in pivot_df.columns and "IPFE-FULLYSEC" in pivot_df.columns:
+        if "IPFE-DDH" in pivot_df.columns and "IPFE-FULLYSEC" in pivot_df.columns or "BQFE" in pivot_df.columns and "UQFE" in pivot_df.columns :
             # Calculate Delta in Percent (for keygen / keyder comparison)
-            pivot_df["Delta (%)"] = round((
-                (pivot_df["IPFE-FULLYSEC"] - pivot_df["IPFE-DDH"]) / pivot_df["IPFE-DDH"]
-            ) * 100,2)
             
-            # Filter rows where both schemas exist for the comparison
-            delta_df = pivot_df.dropna(subset=["IPFE-FULLYSEC", "IPFE-DDH"])
+            if "IPFE-DDH" in pivot_df.columns and "IPFE-FULLYSEC" in pivot_df.columns:
+                pivot_df["Delta (%)"] = round((
+                    (pivot_df["IPFE-FULLYSEC"] - pivot_df["IPFE-DDH"]) / pivot_df["IPFE-DDH"]
+                ) * 100,2)
+                
+                # Filter rows where both schemas exist for the comparison
+                delta_df = pivot_df.dropna(subset=["IPFE-FULLYSEC", "IPFE-DDH"])
             
-           
+            elif "BQFE" in pivot_df.columns and "UQFE" in pivot_df.columns:
+                pivot_df["Delta (%)"] = round((
+                    (pivot_df["UQFE"] - pivot_df["BQFE"]) / pivot_df["BQFE"]
+                ) * 100,2)
+               
+                # Filter rows where both schemas exist for the comparison
+                delta_df = pivot_df.dropna(subset=["UQFE", "BQFE"])
+               
             st.write("---")
             # Create bar plot
             st.subheader(f"{title} - {selected_step.capitalize()} Comparison")
@@ -827,94 +841,235 @@ with tab5:
     # Create plots for Vector Length (l)
     create_bar_and_delta_plots(comparison_length_df, x_axis="l", title="Vector Length (l)")
     
+    
+    
+    
+    
+    
     st.write("---")
-    st.subheader("Compare BQFE with another IPFE Scheme by Total Time")
+    st.header("Benchmarking: Direct Comparison of Schemes")
+    st.subheader("Comparison between BQFE and UQFE")
+    
+    
+    
+    comparison_bits_df = pd.DataFrame()
+    schemas_to_compare = ["BQFE", "UQFE"]
+    
+    # Data preparation for Bits (Key Size)
+    for schema in schemas_to_compare:
+        df = schemas[schema][schema.lower()]  # e.g., schemas["BQFE"]["bqfe"]
+        df["Schema"] = schema
+        comparison_bits_df = pd.concat([comparison_bits_df, df[["k","Schema","time setup", "time encrypt", "time keygen", "time decrypt"]]])
+    
+    # Create plots for Bits (Key Size)
+    create_bar_and_delta_plots(comparison_bits_df, x_axis="k", title="Bits (Key Size)")
+    st.write("---")
 
-    # Choose which IPFE scheme to compare with QFE
-    compare_with = st.selectbox("Compare BQFE with:", ["IPFE-DDH", "IPFE-FULLYSEC"], key="compare_with_total")
+    
+    ### KPIS
+    st.subheader("Delta from BQFE to UQFE (in %):")
 
-    # Load QFE data
-    qfe_df = schemas["BQFE"]["bqfe"].copy()
-    qfe_df["Schema"] = "BQFE"
+    
+    st.markdown(
+        r"""
+        $$
+        \Delta \% 
+        = \frac{\text{ØUQFE}_{k=3 \ldots 64} - \text{ØBQFE}_{k=3 \ldots 64}}
+               {\text{ØBQFE}_{k=3 \ldots 64}} \times 100
+        $$
+        """
+    )
 
-    # Load chosen IPFE scheme data
-    ipfe_bits_df = schemas[compare_with]["bits"].copy()
-    ipfe_bits_df["Schema"] = compare_with
+    st.write("---")
 
-    ipfe_length_df = schemas[compare_with]["length"].copy()
-    ipfe_length_df["Schema"] = compare_with
 
-    def compare_total_time(qfe_df, ipfe_df, qfe_param, ipfe_param, title, unique_id=""):
-        st.markdown(f"### Comparison of QFE ({qfe_param}) with {compare_with} ({ipfe_param}) {title}")
 
-        # Slider for QFE range
-        qfe_min, qfe_max = int(qfe_df[qfe_param].min()), int(qfe_df[qfe_param].max())
-        qfe_range = st.slider(
-            f"Select Range for QFE {qfe_param.upper()}:",
-            min_value=qfe_min,
-            max_value=qfe_max,
-            value=(qfe_min, qfe_max),
-            step=1,
-            key=f"qfe-{qfe_param}-range-total-{unique_id}"
+    steps_qfe = ["time setup", "time encrypt", "time keygen", "time decrypt"]
+    
+
+    df_melted = comparison_bits_df.melt(
+        id_vars=["k", "Schema"],
+        value_vars=steps_qfe,
+        var_name="Step",
+        value_name="Time"
+    )
+    
+
+    kpis_pivot = df_melted.pivot_table(
+        index=["k", "Step"],
+        columns="Schema",
+        values="Time"
+    ).reset_index()
+    
+
+    kpis_pivot["Delta (%)"] = round(
+        ((kpis_pivot["UQFE"] - kpis_pivot["BQFE"]) / kpis_pivot["BQFE"]) * 100,
+        2
+    )
+    
+
+    avg_delta_df = kpis_pivot.groupby("Step")["Delta (%)"].mean().reset_index()
+    
+
+    def get_avg_delta(step_name):
+        row = avg_delta_df[avg_delta_df["Step"] == step_name]
+        return round(row["Delta (%)"].values[0], 2) if not row.empty else 0
+    
+    kpis_pivot["Delta_ns"] = kpis_pivot["UQFE"] - kpis_pivot["BQFE"]
+
+    avg_ns_df = kpis_pivot.groupby("Step")["Delta_ns"].mean().reset_index()
+    
+    def get_avg_delta_ns(step_name):
+        """
+        Returns the average difference in ns (UQFE - BQFE) for a given step.
+        """
+        row = avg_ns_df[avg_ns_df["Step"] == step_name]
+        return row["Delta_ns"].values[0] if not row.empty else 0
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        time_setup_delta = get_avg_delta("time setup")       # e.g. +200%
+        time_setup_ns    = get_avg_delta_ns("time setup")    # e.g. +300000.0
+        st.metric(
+            label="Time Setup",
+            value=f"{time_setup_delta}%",
+            delta=f"{time_setup_ns:.0f} ns",  # round or format as needed
+            delta_color="inverse"            # positive => red arrow up
+        )
+    
+    with col2:
+        time_encrypt_delta = get_avg_delta("time encrypt")
+        time_encrypt_ns    = get_avg_delta_ns("time encrypt")
+        st.metric(
+            label="Time Encrypt",
+            value=f"{time_encrypt_delta}%",
+            delta=f"{time_encrypt_ns:.0f} ns",
+            delta_color="inverse"
+        )
+    
+    with col3:
+        time_keygen_delta = get_avg_delta("time keygen")
+        time_keygen_ns    = get_avg_delta_ns("time keygen")
+        st.metric(
+            label="Time Keygen",
+            value=f"{time_keygen_delta}%",
+            delta=f"{time_keygen_ns:.0f} ns",
+            delta_color="inverse"
+        )
+    
+    with col4:
+        time_decrypt_delta = get_avg_delta("time decrypt")
+        time_decrypt_ns    = get_avg_delta_ns("time decrypt")
+        st.metric(
+            label="Time Decrypt",
+            value=f"{time_decrypt_delta}%",
+            delta=f"{time_decrypt_ns:.0f} ns",
+            delta_color="inverse"
         )
 
-        qfe_filtered = qfe_df[qfe_df[qfe_param].between(qfe_range[0], qfe_range[1])]
 
-        # Slider for IPFE range
-        ipfe_min, ipfe_max = int(ipfe_df[ipfe_param].min()), int(ipfe_df[ipfe_param].max())
-        ipfe_range = st.slider(
-            f"Select Range for {compare_with} {ipfe_param.upper()}:",
-            min_value=ipfe_min,
-            max_value=ipfe_max,
-            value=(ipfe_min, ipfe_max),
-            step=1,
-            key=f"ipfe-{ipfe_param}-range-total-{unique_id}"
-        )
+    
+    
+    
+    st.write("---")
+    
+    
+    
+    
+    
+    
+    # Create plots for Vector Length (l)
+    # create_bar_and_delta_plots(comparison_length_df, x_axis="l", title="Vector Length (l)")
+    
+    # st.write("---")
+    # st.subheader("Compare BQFE with another IPFE Scheme by Total Time")
 
-        ipfe_filtered = ipfe_df[ipfe_df[ipfe_param].between(ipfe_range[0], ipfe_range[1])]
+    # # Choose which IPFE scheme to compare with QFE
+    # compare_with = st.selectbox("Compare BQFE with:", ["IPFE-DDH", "IPFE-FULLYSEC"], key="compare_with_total")
 
-        # For plotting, rename the parameter column to a common name
-        qfe_filtered[f"{qfe_param}_label"] = qfe_param + "=" + qfe_filtered[qfe_param].astype(str)
-        ipfe_filtered[f"{ipfe_param}_label"] = ipfe_param + "=" + ipfe_filtered[ipfe_param].astype(str)
+    # # Load QFE data
+    # qfe_df = schemas["BQFE"]["bqfe"].copy()
+    # qfe_df["Schema"] = "BQFE"
 
-        # Plot QFE total time
-        fig_qfe = px.bar(
-            qfe_filtered,
-            y=f"{qfe_param}_label",
-            x="time total",
-            orientation="h",
-            title=f"QFE (Param {qfe_param.upper()}) {title} - Total Time",
-            labels={"time total": "Time (ns)", f"{qfe_param}_label": qfe_param.upper()},
-            color_discrete_sequence=["#006400"]
-        )
-        fig_qfe.update_traces(texttemplate="%{x:.1f} ns", textposition="inside")
-        st.plotly_chart(fig_qfe, use_container_width=True)
+    # # Load chosen IPFE scheme data
+    # ipfe_bits_df = schemas[compare_with]["bits"].copy()
+    # ipfe_bits_df["Schema"] = compare_with
 
-        # Plot IPFE total time
-        fig_ipfe = px.bar(
-            ipfe_filtered,
-            y=f"{ipfe_param}_label",
-            x="time total",
-            orientation="h",
-            title=f"{compare_with} (Param {ipfe_param.upper()}) {title} - Total Time",
-            labels={"time total": "Time (ns)", f"{ipfe_param}_label": ipfe_param.upper()},
-            color_discrete_sequence=["#228B22"]
-        )
-        fig_ipfe.update_traces(texttemplate="%{x:.1f} ns", textposition="inside")
-        st.plotly_chart(fig_ipfe, use_container_width=True)
+    # ipfe_length_df = schemas[compare_with]["length"].copy()
+    # ipfe_length_df["Schema"] = compare_with
 
-        # Download options
-        with st.expander("📊 Download Filtered Data"):
-            st.write("### QFE Data")
-            st.dataframe(qfe_filtered, use_container_width=True)
+    # def compare_total_time(qfe_df, ipfe_df, qfe_param, ipfe_param, title, unique_id=""):
+    #     st.markdown(f"### Comparison of QFE ({qfe_param}) with {compare_with} ({ipfe_param}) {title}")
+
+    #     # Slider for QFE range
+    #     qfe_min, qfe_max = int(qfe_df[qfe_param].min()), int(qfe_df[qfe_param].max())
+    #     qfe_range = st.slider(
+    #         f"Select Range for QFE {qfe_param.upper()}:",
+    #         min_value=qfe_min,
+    #         max_value=qfe_max,
+    #         value=(qfe_min, qfe_max),
+    #         step=1,
+    #         key=f"qfe-{qfe_param}-range-total-{unique_id}"
+    #     )
+
+    #     qfe_filtered = qfe_df[qfe_df[qfe_param].between(qfe_range[0], qfe_range[1])]
+
+    #     # Slider for IPFE range
+    #     ipfe_min, ipfe_max = int(ipfe_df[ipfe_param].min()), int(ipfe_df[ipfe_param].max())
+    #     ipfe_range = st.slider(
+    #         f"Select Range for {compare_with} {ipfe_param.upper()}:",
+    #         min_value=ipfe_min,
+    #         max_value=ipfe_max,
+    #         value=(ipfe_min, ipfe_max),
+    #         step=1,
+    #         key=f"ipfe-{ipfe_param}-range-total-{unique_id}"
+    #     )
+
+    #     ipfe_filtered = ipfe_df[ipfe_df[ipfe_param].between(ipfe_range[0], ipfe_range[1])]
+
+    #     # For plotting, rename the parameter column to a common name
+    #     qfe_filtered[f"{qfe_param}_label"] = qfe_param + "=" + qfe_filtered[qfe_param].astype(str)
+    #     ipfe_filtered[f"{ipfe_param}_label"] = ipfe_param + "=" + ipfe_filtered[ipfe_param].astype(str)
+
+    #     # Plot QFE total time
+    #     fig_qfe = px.bar(
+    #         qfe_filtered,
+    #         y=f"{qfe_param}_label",
+    #         x="time total",
+    #         orientation="h",
+    #         title=f"QFE (Param {qfe_param.upper()}) {title} - Total Time",
+    #         labels={"time total": "Time (ns)", f"{qfe_param}_label": qfe_param.upper()},
+    #         color_discrete_sequence=["#006400"]
+    #     )
+    #     fig_qfe.update_traces(texttemplate="%{x:.1f} ns", textposition="inside")
+    #     st.plotly_chart(fig_qfe, use_container_width=True)
+
+    #     # Plot IPFE total time
+    #     fig_ipfe = px.bar(
+    #         ipfe_filtered,
+    #         y=f"{ipfe_param}_label",
+    #         x="time total",
+    #         orientation="h",
+    #         title=f"{compare_with} (Param {ipfe_param.upper()}) {title} - Total Time",
+    #         labels={"time total": "Time (ns)", f"{ipfe_param}_label": ipfe_param.upper()},
+    #         color_discrete_sequence=["#228B22"]
+    #     )
+    #     fig_ipfe.update_traces(texttemplate="%{x:.1f} ns", textposition="inside")
+    #     st.plotly_chart(fig_ipfe, use_container_width=True)
+
+    #     # Download options
+    #     with st.expander("📊 Download Filtered Data"):
+    #         st.write("### QFE Data")
+    #         st.dataframe(qfe_filtered, use_container_width=True)
 
 
-            st.write(f"### {compare_with} Data")
-            st.dataframe(ipfe_filtered, use_container_width=True)
+    #         st.write(f"### {compare_with} Data")
+    #         st.dataframe(ipfe_filtered, use_container_width=True)
 
 
-    # Compare QFE (k) with IPFE (bits)
-    compare_total_time(qfe_df, ipfe_bits_df, qfe_param="k", ipfe_param="bits", title="(Key Sizes)", unique_id="bits")
+    # # Compare QFE (k) with IPFE (bits)
+    # compare_total_time(qfe_df, ipfe_bits_df, qfe_param="k", ipfe_param="bits", title="(Key Sizes)", unique_id="bits")
 
-    # Compare QFE (k) with IPFE (l)
-    compare_total_time(qfe_df, ipfe_length_df, qfe_param="k", ipfe_param="l", title="(Vector Length)", unique_id="length")
+    # # Compare QFE (k) with IPFE (l)
+    # compare_total_time(qfe_df, ipfe_length_df, qfe_param="k", ipfe_param="l", title="(Vector Length)", unique_id="length")
