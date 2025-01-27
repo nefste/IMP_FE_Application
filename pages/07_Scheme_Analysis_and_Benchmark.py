@@ -38,7 +38,7 @@ def load_data():
             "bqfe": "data/qfe_benchmark_fixed_vectors_sizes.csv",  # Die Pfad zur neuen Datei
         },
         "UQFE": {
-            "uqfe": "data/uqfe_benchmark_fixed_vectors_2.csv",  # Die Pfad zur neuen Datei
+            "uqfe": "data/uqfe_benchmark_message_lengths_range.csv",  # Die Pfad zur neuen Datei
         }
     }
     schemas = {}
@@ -620,8 +620,8 @@ with tab4:
             min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
             selected_range = st.slider(
                 "Select Range for Key Sizes (k):",
-                min_value=min_l,
-                max_value=max_l,
+                min_value=1,
+                max_value=64,
                 value=(min_l, max_l),  
                 step=1,  # Schrittweite
                 key='uqfe'
@@ -685,7 +685,7 @@ with tab5:
     st.header("Benchmarking: Direct Comparison of Schemes")
     st.write("---")
     # Single-select for steps (combine keygen/keyder)
-    steps = ["time setup", "time encrypt", "time keygen / keyder", "time decrypt"]
+    steps = ["time setup", "time encrypt", "time keygen", "time decrypt"]
     selected_step = st.selectbox("Select a Step to Compare", steps, key="benchmark_ipfe")
     st.info(selected_step)
     st.write("---")
@@ -824,7 +824,7 @@ with tab5:
                     text="Delta (%)" 
                 )
                 
-                delta_fig.update_traces(textposition="outside") 
+                # delta_fig.update_traces(textposition="outside") 
                 # Show the plot
                 st.plotly_chart(delta_fig, use_container_width=True)
             else:
@@ -859,23 +859,23 @@ with tab5:
     for schema in schemas_to_compare:
         df = schemas[schema][schema.lower()]  # e.g., schemas["BQFE"]["bqfe"]
         df["Schema"] = schema
-        comparison_bits_df = pd.concat([comparison_bits_df, df[["k","Schema","time setup", "time encrypt", "time keygen", "time decrypt"]]])
+        comparison_bits_df = pd.concat([comparison_bits_df, df[["n","Schema","time setup", "time encrypt", "time keygen", "time decrypt"]]])
     
     # Create plots for Bits (Key Size)
-    create_bar_and_delta_plots(comparison_bits_df, x_axis="k", title="Bits (Key Size)")
+    create_bar_and_delta_plots(comparison_bits_df, x_axis="n", title="Input Vector Length (n)")
     st.write("---")
 
     
     ### KPIS
-    st.subheader("Delta from BQFE to UQFE (in %):")
+    st.subheader("Delta from BQFE to UQFE runtime (in %):")
 
     
     st.markdown(
         r"""
         $$
         \Delta \% 
-        = \frac{\text{ØUQFE}_{k=3 \ldots 64} - \text{ØBQFE}_{k=3 \ldots 64}}
-               {\text{ØBQFE}_{k=3 \ldots 64}} \times 100
+        = \frac{\text{ØUQFE}_{n=3 \ldots 64} - \text{ØBQFE}_{k=3 \ldots 64}}
+               {\text{ØBQFE}_{n=3 \ldots 64}} \times 100
         $$
         """
     )
@@ -888,7 +888,7 @@ with tab5:
     
 
     df_melted = comparison_bits_df.melt(
-        id_vars=["k", "Schema"],
+        id_vars=["n", "Schema"],
         value_vars=steps_qfe,
         var_name="Step",
         value_name="Time"
@@ -896,7 +896,7 @@ with tab5:
     
 
     kpis_pivot = df_melted.pivot_table(
-        index=["k", "Step"],
+        index=["n", "Step"],
         columns="Schema",
         values="Time"
     ).reset_index()
