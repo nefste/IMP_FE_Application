@@ -35,10 +35,10 @@ def load_data():
             "bits": "data/ipfe-fullysec_timings_increasing_bits.csv",
         },
         "BQFE": {
-            "bqfe": "data/qfe_benchmark_fixed_vectors_sizes.csv",  # Die Pfad zur neuen Datei
+            "bqfe": "data/qfe_benchmark_message_length_3_65.csv",  # Die Pfad zur neuen Datei
         },
         "UQFE": {
-            "uqfe": "data/uqfe_benchmark_message_lengths_range.csv",  # Die Pfad zur neuen Datei
+            "uqfe": "data/uqfe_benchmark_message_length_3_65.csv",  # Die Pfad zur neuen Datei
         }
     }
     schemas = {}
@@ -458,16 +458,16 @@ with tab3:
             fig_line = go.Figure()
             
             # Linien hinzufügen
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time setup'], mode='lines', name='Time Setup'))
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time keygen'], mode='lines', name='Time Keygen'))
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time total'], mode='lines', name='Time Total'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time setup'], mode='lines', name='Time Setup'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time keygen'], mode='lines', name='Time Keygen'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time total'], mode='lines', name='Time Total'))
             
             # Layout für den Plot anpassen
             fig_line.update_layout(
-                title="BQFE Benchmark - Key Sizes with fixed Vectors",
-                xaxis_title="k",
+                title="BQFE Benchmark - Message Sizes with fixed Vectors",
+                xaxis_title="n",
                 yaxis_title="Time (seconds)",
                 legend_title="Steps",
                 template="plotly_white",
@@ -501,7 +501,7 @@ with tab3:
             
             min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
             selected_range = st.slider(
-                "Select Range for Key Sizes (k):",
+                "Select Range for n:",
                 min_value=min_l,
                 max_value=max_l,
                 value=(min_l, max_l),  
@@ -520,9 +520,10 @@ with tab3:
                 x="Time",
                 color="Step",
                 orientation="h",
-                title=f"{schema}: Absolute Times (Key-Sizes)",
-                labels={"Time": "Time (ns)", "k": "k Value"},
-                color_discrete_sequence=green_palette
+                title=f"{schema}: Absolute Times",
+                labels={"Time": "Time (ns)", "n": "n Value"},
+                color_discrete_sequence=green_palette,
+                log_x=True
             )
             # Werte innerhalb der Balken anzeigen
             fig_absolute.update_traces(
@@ -541,9 +542,10 @@ with tab3:
                 x="Percentage",
                 color="Step",
                 orientation="h",
-                title=f"{schema}: Percentage of Total Time (Key-Sizes)",
-                labels={"Percentage": "Percentage (%)", "k": "k Value"},
-                color_discrete_sequence=green_palette
+                title=f"{schema}: Percentage of Total Time",
+                labels={"Percentage": "Percentage (%)", "n": "n Value"},
+                color_discrete_sequence=green_palette,
+                log_x=True
             )
             fig_percentage.update_traces(
                 texttemplate="%{x:.1f}%",
@@ -576,16 +578,16 @@ with tab4:
             fig_line = go.Figure()
             
             # Linien hinzufügen
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time setup'], mode='lines', name='Time Setup'))
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time keygen'], mode='lines', name='Time Keygen'))
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
-            fig_line.add_trace(go.Scatter(x=df['k'], y=df['time total'], mode='lines', name='Time Total'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time setup'], mode='lines', name='Time Setup'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time keygen'], mode='lines', name='Time Keygen'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time encrypt'], mode='lines', name='Time Encrypt'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time decrypt'], mode='lines', name='Time Decrypt'))
+            fig_line.add_trace(go.Scatter(x=df['n'], y=df['time total'], mode='lines', name='Time Total'))
             
             # Layout für den Plot anpassen
             fig_line.update_layout(
-                title="UQFE Benchmark - Key Sizes with fixed Vectors",
-                xaxis_title="k",
+                title="UQFE Benchmark - Message Sizes with fixed Vectors",
+                xaxis_title="n",
                 yaxis_title="Time (seconds)",
                 legend_title="Steps",
                 template="plotly_white",
@@ -608,7 +610,7 @@ with tab4:
             
             # Daten umwandeln, um alle k-Werte auf der Y-Achse anzuzeigen
             melted_df = df.melt(
-                id_vars=["k", "time total"], 
+                id_vars=["n", "time total"], 
                 value_vars=steps, 
                 var_name="Step", 
                 value_name="Time"
@@ -617,9 +619,9 @@ with tab4:
             # Daten auf die ausgewählten Schritte filtern
             melted_df = melted_df[melted_df["Step"].isin(selected_steps)]
             
-            min_l, max_l = int(melted_df["k"].min()), int(melted_df["k"].max())
+            min_l, max_l = int(melted_df["n"].min()), int(melted_df["n"].max())
             selected_range = st.slider(
-                "Select Range for Key Sizes (k):",
+                "Select Range for n:",
                 min_value=1,
                 max_value=64,
                 value=(min_l, max_l),  
@@ -628,18 +630,18 @@ with tab4:
             )
             
             melted_df = melted_df[
-                melted_df["k"].astype(int).between(selected_range[0], selected_range[1])
+                melted_df["n"].astype(int).between(selected_range[0], selected_range[1])
             ]
             
             # Absoluter Werte Barplot
             fig_absolute = px.bar(
                 melted_df,
-                y="k",  # Alle k-Werte auf der Y-Achse
+                y="n",  # Alle k-Werte auf der Y-Achse
                 x="Time",
                 color="Step",
                 orientation="h",
-                title=f"{schema}: Absolute Times (Key-Sizes)",
-                labels={"Time": "Time (ns)", "k": "k Value"},
+                title=f"{schema}: Absolute Times",
+                labels={"Time": "Time (ns)", "n": "n Value"},
                 color_discrete_sequence=green_palette
             )
             # Werte innerhalb der Balken anzeigen
@@ -655,12 +657,12 @@ with tab4:
             melted_df["Percentage"] = (melted_df["Time"] / melted_df["time total"]) * 100
             fig_percentage = px.bar(
                 melted_df,
-                y="k",  # Alle k-Werte auf der Y-Achse
+                y="n",  # Alle k-Werte auf der Y-Achse
                 x="Percentage",
                 color="Step",
                 orientation="h",
-                title=f"{schema}: Percentage of Total Time (Key-Sizes)",
-                labels={"Percentage": "Percentage (%)", "k": "k Value"},
+                title=f"{schema}: Percentage of Total Time",
+                labels={"Percentage": "Percentage (%)", "n": "n Value"},
                 color_discrete_sequence=green_palette
             )
             fig_percentage.update_traces(
